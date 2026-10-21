@@ -1,0 +1,1 @@
+ALTER TABLE public.responses ADD COLUMN IF NOT EXISTS local_things text[];

@@ -1,0 +1,3 @@
+ALTER TABLE public.responses ADD COLUMN IF NOT EXISTS follow_up_answers jsonb NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.responses ADD CONSTRAINT responses_follow_up_answers_valid CHECK (jsonb_typeof(follow_up_answers) = 'object' AND octet_length(follow_up_answers::text) <= 50000);
+COMMENT ON COLUMN public.responses.follow_up_answers IS 'Optional answer details grouped by existing response column and selected option; excludes contact email addresses.';
