@@ -142,7 +142,9 @@ function Index() {
         if (
           parsed &&
           typeof parsed === "object" &&
-          typeof (parsed as View).name === "string"
+          typeof (parsed as View).name === "string" &&
+          // Older versions saved the thank you page; never reopen on it.
+          (parsed as View).name !== "thanks"
         ) {
           setView(parsed as View);
         }
@@ -198,7 +200,13 @@ function Index() {
   };
 
   if (view.name === "thanks")
-    return <ThankYouPage failed={sendFailed} onRetry={finish} />;
+    return (
+      <ThankYouPage
+        failed={sendFailed}
+        onRetry={finish}
+        onRestart={() => setView({ name: "start" })}
+      />
+    );
 
   const hub = (
     <HubPage
@@ -634,9 +642,11 @@ function CheckAnswersPage({
 function ThankYouPage({
   failed,
   onRetry,
+  onRestart,
 }: {
   failed: boolean;
   onRetry: () => void;
+  onRestart: () => void;
 }) {
   return (
     <Page>
@@ -675,6 +685,12 @@ function ThankYouPage({
         <Link to="/about" className="govuk-link">
           A bit about who&rsquo;s behind this
         </Link>
+      </p>
+
+      <p className={`mt-5 ${body}`}>
+        <button type="button" className="govuk-link text-left" onClick={onRestart}>
+          Back to the start
+        </button>
       </p>
     </Page>
   );
