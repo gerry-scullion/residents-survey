@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { questions, type Question } from "@/questions";
-import { submitAnswers } from "@/lib/submit";
+import { submitAnswers, type Answer, type Answers } from "@/lib/submit";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -16,17 +16,6 @@ export const Route = createFileRoute("/")({
   }),
   component: Index,
 });
-
-type Answer = {
-  /** Selected option label(s). */
-  selected: string[];
-  /** Free text for a text question. */
-  text?: string | undefined;
-  /** Follow-up text keyed by the option label it belongs to. */
-  followUps?: Record<string, string> | undefined;
-};
-
-type Answers = Record<string, Answer>;
 
 const STORAGE_KEY = "kincora-answers-v1";
 const STEP_KEY = "kincora-step-v1";
@@ -139,7 +128,7 @@ function Index() {
   const [view, setView] = useState<View>({ name: "start" });
   const [answers, setAnswers] = useState<Answers>({});
   const [completed, setCompleted] = useState<string[]>([]);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [sendFailed, setSendFailed] = useState(false);
 
   useEffect(() => {
     try {
@@ -181,7 +170,10 @@ function Index() {
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(STEP_KEY, JSON.stringify(view));
+      // Don't reopen on the thank you page: someone else in the house may
+      // want to fill it in on the same phone.
+      if (view.name === "thanks") window.localStorage.removeItem(STEP_KEY);
+      else window.localStorage.setItem(STEP_KEY, JSON.stringify(view));
     } catch {
       /* ignore */
     }
@@ -194,19 +186,28 @@ function Index() {
     );
 
   const finish = () => {
-    setSubmitError(null);
-    submitAnswers(answers).catch((error: unknown) => {
-      setSubmitError(
-        error instanceof Error
-          ? error.message
-          : "We could not save your answers.",
-      );
-    });
+    setSendFailed(false);
     setView({ name: "thanks" });
+    submitAnswers(answers)
+      .then(() => {
+        // Sent, so don't keep the answers on this device.
+        setAnswers({});
+        setCompleted([]);
+      })
+      .catch(() => setSendFailed(true));
   };
 
   if (view.name === "thanks")
-    return <ThankYouPage error={submitError} />;
+    return <ThankYouPage failed={sendFailed} onRetry={finish} />;
+
+  const hub = (
+    <HubPage
+      answers={answers}
+      completed={completed}
+      onOpen={(sectionId) => setView({ name: "question", sectionId, index: 0 })}
+      onCheck={() => setView({ name: "check" })}
+    />
+  );
 
   if (view.name === "check")
     return (
@@ -225,7 +226,7 @@ function Index() {
     const questionId = section?.questionIds[view.index];
     const question = questionId ? questionById(questionId) : undefined;
 
-    if (!section || !question) return <HubPageWrapper />;
+    if (!section || !question) return hub;
 
     const ids = section.questionIds;
     const findVisible = (from: number, step: 1 | -1) => {
@@ -289,20 +290,7 @@ function Index() {
     );
   }
 
-  return <HubPageWrapper />;
-
-  function HubPageWrapper() {
-    return (
-      <HubPage
-        answers={answers}
-        completed={completed}
-        onOpen={(sectionId) =>
-          setView({ name: "question", sectionId, index: 0 })
-        }
-        onCheck={() => setView({ name: "check" })}
-      />
-    );
-  }
+  return hub;
 }
 
 function statusFor(
@@ -359,18 +347,8 @@ function HubPage({
       </p>
 
       <p className={`mt-4 ${body}`}>
-        {"\n"}
-      </p>
-
-      <p className={`mt-4 ${body}`}>
-        We don&rsquo;t ask for your name. You can skip any question.
-        {"\u00a0\n"}
-        The survey should take around five minutes to complete.
-        {"\n"}
-      </p>
-
-      <p className={`mt-4 ${body}`}>
-        {"\n"}
+        We don&rsquo;t ask for your name. You can skip any question. The
+        survey should take around five minutes to complete.
       </p>
 
       <h2 className="mt-10 max-w-[30rem] text-[1.5rem] font-bold leading-[1.2] md:text-[1.875rem]">
@@ -653,17 +631,27 @@ function CheckAnswersPage({
   );
 }
 
-function ThankYouPage({ error }: { error?: string | null }) {
+function ThankYouPage({
+  failed,
+  onRetry,
+}: {
+  failed: boolean;
+  onRetry: () => void;
+}) {
   return (
     <Page>
       <h1 className={pageTitle}>Thank you!</h1>
 
-      <p className={`mt-5 ${body}`}></p>
-
-      {error ? (
-        <p className={`mt-5 ${body}`}>
-          We could not save your answers just now. Please try again later.
-        </p>
+      {failed ? (
+        <div role="alert" className="mt-5 border-l-[5px] border-govuk-black pl-4">
+          <p className={body}>
+            We could not send your answers just now. They are still saved on
+            this device.
+          </p>
+          <button type="button" className="govuk-button mt-4 w-full" onClick={onRetry}>
+            Try sending again
+          </button>
+        </div>
       ) : null}
 
       <p className={`mt-6 ${body}`}>

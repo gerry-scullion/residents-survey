@@ -32,8 +32,6 @@ function Privacy() {
           What happens to your answers
         </h1>
 
-        <p className={`mt-6 ${body}`}></p>
-
         <p className={`mt-5 ${body}`}>
           We do not ask for your name or your house number. Please do not
           include them in the written answers.
@@ -56,8 +54,6 @@ function Privacy() {
           We will delete everything once the summary has been shared and the
           committee has made its decision.
         </p>
-
-        <p className={`mt-5 ${body}`}></p>
 
         <p className={`mt-10 ${body}`}>
           <Link to="/" className="govuk-link">

@@ -37,6 +37,14 @@ The committee sees the synthesis, not the raw responses.
 
 
 
+## Netlify Forms
+
+Answers are sent to Netlify Forms as two separate forms, `survey` and `contact`, so an email address is never stored next to a set of answers. They are also saved to Supabase when it is connected; either one succeeding counts as sent.
+
+Netlify can only find forms in static HTML, and this app is rendered by JavaScript, so the forms are declared in `public/__forms.html` and the app posts to that file. If you add or rename a question field, update that file too. `bun test` fails if the two drift apart.
+
+After the first deploy, turn on form detection in the Netlify dashboard (Forms > Enable form detection) and redeploy. Set up email notifications there if you want them.
+
 This project was built with [Lovable](https://lovable.dev).
 
 ## Build with Lovable

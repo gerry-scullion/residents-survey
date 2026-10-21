@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>Forms</title>
+  </head>
+  <body>
+    <!--
+      Netlify reads this file at deploy time to register the forms.
+      The survey itself posts here from JavaScript (see src/lib/submit.ts).
+      Field names must match src/lib/response.ts; a test checks this.
+      The two forms are separate on purpose: answers and email addresses
+      must never be linked.
+    -->
+    <form name="survey" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
+      <input type="hidden" name="form-name" value="survey" />
+      <input name="bot-field" />
+      <input name="road" />
+      <textarea name="road_details"></textarea>
+      <input name="tenure" />
+      <input name="household" />
+      <input name="has_dog" />
+      <input name="age_band" />
+      <input name="outdoor_places" />
+      <textarea name="outdoor_places_details"></textarea>
+      <input name="place_uses" />
+      <textarea name="place_uses_details"></textarea>
+      <textarea name="why_not_used"></textarea>
+      <input name="local_things" />
+      <textarea name="local_things_details"></textarea>
+      <input name="needs_fixing" />
+      <textarea name="needs_fixing_details"></textarea>
+      <textarea name="fixing_location"></textarea>
+      <textarea name="what_is_good"></textarea>
+      <input name="looks_after" />
+      <textarea name="looks_after_detail"></textarea>
+      <textarea name="one_change"></textarea>
+      <textarea name="anything_else"></textarea>
+    </form>
+
+    <form name="contact" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
+      <input type="hidden" name="form-name" value="contact" />
+      <input name="bot-field" />
+      <input type="email" name="email" />
+      <input name="wants_own_copy" />
+      <input name="wants_updates" />
+    </form>
+  </body>
+</html>

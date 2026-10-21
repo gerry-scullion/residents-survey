@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.output/
+.netlify/
+.vinxi/
+.env
+.env.*
+*.log
+.DS_Store
+
+# Never commit response data.
+*.csv
