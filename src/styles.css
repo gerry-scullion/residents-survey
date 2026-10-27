@@ -189,6 +189,11 @@
   &:active {
     background-color: var(--color-govuk-green-hover);
   }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
 }
 
 /* GOV.UK text input / textarea: black 2px border, no radius. */

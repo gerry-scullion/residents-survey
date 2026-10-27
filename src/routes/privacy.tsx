@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { BackToSurvey } from "@/components/page";
 
 export const Route = createFileRoute("/privacy")({
   head: () => ({
@@ -56,9 +57,7 @@ function Privacy() {
         </p>
 
         <p className={`mt-10 ${body}`}>
-          <Link to="/" className="govuk-link">
-            Back
-          </Link>
+          <BackToSurvey>Back to the survey</BackToSurvey>
         </p>
       </div>
     </main>
