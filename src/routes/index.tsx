@@ -1,7 +1,25 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { questions, type Question } from "@/questions";
-import { submitAnswers } from "@/lib/submit";
+import { submitAnswers, type Answer, type Answers } from "@/lib/submit";
+import { body, Page, pageTitle } from "@/components/page";
+
+/**
+ * Where someone is in the survey lives in the address, for example
+ * `/?section=use&q=1` or `/?page=check`. Each step is its own entry in the
+ * browser history, so the phone's back and forward buttons work.
+ */
+type Search = { section?: string; q?: number; from?: "check"; page?: "check" };
+
+function validateSearch(raw: Record<string, unknown>): Search {
+  const search: Search = {};
+  if (raw["page"] === "check") search.page = "check";
+  if (typeof raw["section"] === "string") search.section = raw["section"];
+  const q = Number(raw["q"]);
+  if (Number.isInteger(q) && q > 0) search.q = q;
+  if (raw["from"] === "check") search.from = "check";
+  return search;
+}
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -14,30 +32,16 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  validateSearch,
   component: Index,
 });
 
-type Answer = {
-  /** Selected option label(s). */
-  selected: string[];
-  /** Free text for a text question. */
-  text?: string | undefined;
-  /** Follow-up text keyed by the option label it belongs to. */
-  followUps?: Record<string, string> | undefined;
-};
-
-type Answers = Record<string, Answer>;
-
 const STORAGE_KEY = "kincora-answers-v1";
-const STEP_KEY = "kincora-step-v1";
+/** Older versions saved the current step here; it is now in the address. */
+const OLD_STEP_KEY = "kincora-step-v1";
 const SECTIONS_KEY = "kincora-sections-v1";
-/** Body copy: 19px minimum, 1.5 line height, measure capped near 70 characters. */
-const body = "text-[1.1875rem] leading-[1.5] max-w-[36rem]";
 /** Opening paragraph on the introduction pages. */
 const lead = "text-[1.3125rem] leading-[1.45] max-w-[34rem]";
-/** Page title on the introduction and thank you pages. */
-const pageTitle =
-  "text-[2rem] md:text-[2.5rem] font-bold leading-[1.1] tracking-[-0.01em] text-balance max-w-[30rem]";
 /** Question title. */
 const questionTitle =
   "text-[1.75rem] md:text-[2.125rem] font-bold leading-[1.15] tracking-[-0.01em] text-balance max-w-[32rem]";
@@ -95,11 +99,41 @@ const hasAnswer = (answer?: Answer) =>
   Boolean(answer && (answer.selected.length > 0 || (answer.text ?? "").trim()));
 
 type View =
-  | { name: "start" }
   | { name: "hub" }
   | { name: "question"; sectionId: string; index: number; fromCheck?: boolean }
-  | { name: "check" }
-  | { name: "thanks" };
+  | { name: "check" };
+
+function viewFromSearch(search: Search): View {
+  if (search.page === "check") return { name: "check" };
+  if (search.section)
+    return {
+      name: "question",
+      sectionId: search.section,
+      index: search.q ?? 0,
+      fromCheck: search.from === "check",
+    };
+  return { name: "hub" };
+}
+
+function searchFromView(view: View): Search {
+  if (view.name === "check") return { page: "check" };
+  if (view.name === "question")
+    return {
+      section: view.sectionId,
+      ...(view.index ? { q: view.index } : {}),
+      ...(view.fromCheck ? { from: "check" as const } : {}),
+    };
+  return {};
+}
+
+function clearSavedAnswers() {
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+    window.localStorage.removeItem(SECTIONS_KEY);
+  } catch {
+    /* ignore */
+  }
+}
 
 function BackLink({ onClick }: { onClick: () => void }) {
   return (
@@ -113,33 +147,18 @@ function BackLink({ onClick }: { onClick: () => void }) {
   );
 }
 
-function Page({ children }: { children: React.ReactNode }) {
-  return (
-    <main className="min-h-screen bg-govuk-white px-4 pb-8 pt-4 font-govuk text-govuk-black md:px-8 md:pb-16 md:pt-10">
-      <div className="mx-auto w-full max-w-[42rem]">
-        <div className="min-w-0">{children}</div>
-        <footer className="mt-8 border-t border-govuk-black/20 pt-5" aria-label="Help and privacy">
-          <p className={`${body}`}>
-            <Link to="/privacy" className="govuk-link">
-              What happens to your answers
-            </Link>
-          </p>
-          <p className={`mt-4 ${body}`}>
-            <Link to="/about" className="govuk-link">
-              Who’s behind this
-            </Link>
-          </p>
-        </footer>
-      </div>
-    </main>
-  );
-}
-
 function Index() {
-  const [view, setView] = useState<View>({ name: "start" });
+  const navigate = useNavigate();
+  const view = viewFromSearch(Route.useSearch());
+  const setView = (next: View) =>
+    void navigate({ to: "/", search: searchFromView(next) });
   const [answers, setAnswers] = useState<Answers>({});
   const [completed, setCompleted] = useState<string[]>([]);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  // Nothing is saved until the saved answers have been read back, so an
+  // empty first render can't overwrite them.
+  const [loaded, setLoaded] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sendFailed, setSendFailed] = useState(false);
 
   useEffect(() => {
     try {
@@ -147,46 +166,27 @@ function Index() {
       if (saved) setAnswers(JSON.parse(saved) as Answers);
       const savedSections = window.localStorage.getItem(SECTIONS_KEY);
       if (savedSections) setCompleted(JSON.parse(savedSections) as string[]);
-      const savedStep = window.localStorage.getItem(STEP_KEY);
-      if (savedStep) {
-        const parsed: unknown = JSON.parse(savedStep);
-        if (
-          parsed &&
-          typeof parsed === "object" &&
-          typeof (parsed as View).name === "string"
-        ) {
-          setView(parsed as View);
-        }
-      }
+      window.localStorage.removeItem(OLD_STEP_KEY);
     } catch {
       /* ignore */
     }
+    setLoaded(true);
   }, []);
 
   useEffect(() => {
+    if (!loaded) return;
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(answers));
-    } catch {
-      /* ignore */
-    }
-  }, [answers]);
-
-  useEffect(() => {
-    try {
       window.localStorage.setItem(SECTIONS_KEY, JSON.stringify(completed));
     } catch {
       /* ignore */
     }
-  }, [completed]);
+  }, [loaded, answers, completed]);
 
+  const viewKey = JSON.stringify(view);
   useEffect(() => {
-    try {
-      window.localStorage.setItem(STEP_KEY, JSON.stringify(view));
-    } catch {
-      /* ignore */
-    }
     window.scrollTo(0, 0);
-  }, [view]);
+  }, [viewKey]);
 
   const markCompleted = (sectionId: string) =>
     setCompleted((prev) =>
@@ -194,19 +194,30 @@ function Index() {
     );
 
   const finish = () => {
-    setSubmitError(null);
-    submitAnswers(answers).catch((error: unknown) => {
-      setSubmitError(
-        error instanceof Error
-          ? error.message
-          : "We could not save your answers.",
-      );
-    });
-    setView({ name: "thanks" });
+    if (sending) return;
+    setSending(true);
+    setSendFailed(false);
+    submitAnswers(answers)
+      .then(() => {
+        // Sent, so don't keep the answers on this device. Replace the check
+        // page in the history so going back can't send them twice.
+        clearSavedAnswers();
+        setAnswers({});
+        setCompleted([]);
+        void navigate({ to: "/thanks", replace: true });
+      })
+      .catch(() => setSendFailed(true))
+      .finally(() => setSending(false));
   };
 
-  if (view.name === "thanks")
-    return <ThankYouPage error={submitError} />;
+  const hub = (
+    <HubPage
+      answers={answers}
+      completed={completed}
+      onOpen={(sectionId) => setView({ name: "question", sectionId, index: 0 })}
+      onCheck={() => setView({ name: "check" })}
+    />
+  );
 
   if (view.name === "check")
     return (
@@ -217,6 +228,8 @@ function Index() {
           setView({ name: "question", sectionId, index, fromCheck: true })
         }
         onSubmit={finish}
+        sending={sending}
+        failed={sendFailed}
       />
     );
 
@@ -225,7 +238,7 @@ function Index() {
     const questionId = section?.questionIds[view.index];
     const question = questionId ? questionById(questionId) : undefined;
 
-    if (!section || !question) return <HubPageWrapper />;
+    if (!section || !question) return hub;
 
     const ids = section.questionIds;
     const findVisible = (from: number, step: 1 | -1) => {
@@ -269,6 +282,7 @@ function Index() {
               ? "Save and return to the list"
               : "Continue"
         }
+        onHub={() => setView({ name: "hub" })}
         onContinue={() => {
           if (view.fromCheck) {
             setView({ name: "check" });
@@ -289,20 +303,7 @@ function Index() {
     );
   }
 
-  return <HubPageWrapper />;
-
-  function HubPageWrapper() {
-    return (
-      <HubPage
-        answers={answers}
-        completed={completed}
-        onOpen={(sectionId) =>
-          setView({ name: "question", sectionId, index: 0 })
-        }
-        onCheck={() => setView({ name: "check" })}
-      />
-    );
-  }
+  return hub;
 }
 
 function statusFor(
@@ -359,18 +360,8 @@ function HubPage({
       </p>
 
       <p className={`mt-4 ${body}`}>
-        {"\n"}
-      </p>
-
-      <p className={`mt-4 ${body}`}>
-        We don&rsquo;t ask for your name. You can skip any question.
-        {"\u00a0\n"}
-        The survey should take around five minutes to complete.
-        {"\n"}
-      </p>
-
-      <p className={`mt-4 ${body}`}>
-        {"\n"}
+        We don&rsquo;t ask for your name. You can skip any question. The
+        survey should take around five minutes to complete.
       </p>
 
       <h2 className="mt-10 max-w-[30rem] text-[1.5rem] font-bold leading-[1.2] md:text-[1.875rem]">
@@ -435,6 +426,7 @@ function QuestionPage({
   answer,
   onChange,
   onBack,
+  onHub,
   onContinue,
   continueLabel,
 }: {
@@ -445,6 +437,7 @@ function QuestionPage({
   answer?: Answer | undefined;
   onChange: (next: Answer) => void;
   onBack: () => void;
+  onHub: () => void;
   onContinue: () => void;
   continueLabel: string;
 }) {
@@ -572,6 +565,17 @@ function QuestionPage({
       >
         {continueLabel}
       </button>
+
+      <p className={`mt-6 ${body}`}>
+        <button
+          type="button"
+          className="govuk-link min-h-[2.75rem] py-2 text-left"
+          onClick={onHub}
+        >
+          Go to the list of sections
+        </button>
+        <span className="block text-[1rem]">Your answers so far are saved.</span>
+      </p>
     </Page>
   );
 }
@@ -593,11 +597,15 @@ function CheckAnswersPage({
   onBack,
   onChange,
   onSubmit,
+  sending,
+  failed,
 }: {
   answers: Answers;
   onBack: () => void;
   onChange: (sectionId: string, index: number) => void;
   onSubmit: () => void;
+  sending: boolean;
+  failed: boolean;
 }) {
   return (
     <Page>
@@ -646,48 +654,30 @@ function CheckAnswersPage({
         </section>
       ))}
 
-      <button type="button" className="govuk-button mt-8 w-full" onClick={onSubmit}>
-        Send your answers
-      </button>
-    </Page>
-  );
-}
-
-function ThankYouPage({ error }: { error?: string | null }) {
-  return (
-    <Page>
-      <h1 className={pageTitle}>Thank you!</h1>
-
-      <p className={`mt-5 ${body}`}></p>
-
-      {error ? (
-        <p className={`mt-5 ${body}`}>
-          We could not save your answers just now. Please try again later.
-        </p>
+      {failed ? (
+        <div
+          role="alert"
+          className="mt-8 border-l-[5px] border-govuk-black pl-4"
+        >
+          <p className={`font-bold ${body}`}>
+            Your answers have not been sent
+          </p>
+          <p className={`mt-2 ${body}`}>
+            Something went wrong on our side. Your answers are still saved on
+            this phone. Please try again, or come back later.
+          </p>
+        </div>
       ) : null}
 
-      <p className={`mt-6 ${body}`}>
-        We&rsquo;ll put together what everyone said and bring it back to the
-        committee and to the residents. Everyone sees the same summary,
-        including where people disagreed.
-      </p>
-
-      <p className={`mt-5 ${body}`}>
-        The committee has some money set aside for the area, but no plan for
-        it yet. The aim of this survey is to start to understand how people would like it to be used.
-      </p>
-
-      <p className={`mt-5 ${body}`}>
-        Some of what comes up will be the council&rsquo;s responsibility, not
-        the committee&rsquo;s. When that happens, we&rsquo;ll tell you and
-        show you how to report it to the right place.
-      </p>
-
-      <p className={`mt-5 ${body}`}>
-        <Link to="/about" className="govuk-link">
-          A bit about who&rsquo;s behind this
-        </Link>
-      </p>
+      <button
+        type="button"
+        className="govuk-button mt-8 w-full"
+        onClick={onSubmit}
+        disabled={sending}
+        aria-disabled={sending}
+      >
+        {sending ? "Sending…" : failed ? "Try sending again" : "Send your answers"}
+      </button>
     </Page>
   );
 }

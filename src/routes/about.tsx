@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { BackToSurvey } from "@/components/page";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -36,9 +37,7 @@ function About() {
           .
         </p>
         <p className={`mt-10 ${body}`}>
-          <Link to="/" className="govuk-link">
-            Back to the questions
-          </Link>
+          <BackToSurvey>Back to the survey</BackToSurvey>
         </p>
       </div>
     </main>

@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { BackToSurvey } from "@/components/page";
 
 export const Route = createFileRoute("/privacy")({
   head: () => ({
@@ -32,8 +33,6 @@ function Privacy() {
           What happens to your answers
         </h1>
 
-        <p className={`mt-6 ${body}`}></p>
-
         <p className={`mt-5 ${body}`}>
           We do not ask for your name or your house number. Please do not
           include them in the written answers.
@@ -57,12 +56,8 @@ function Privacy() {
           committee has made its decision.
         </p>
 
-        <p className={`mt-5 ${body}`}></p>
-
         <p className={`mt-10 ${body}`}>
-          <Link to="/" className="govuk-link">
-            Back
-          </Link>
+          <BackToSurvey>Back to the survey</BackToSurvey>
         </p>
       </div>
     </main>
