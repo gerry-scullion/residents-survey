@@ -78,12 +78,6 @@ const sections: Section[] = [
     description: "What you like about living here and what could be different.",
     questionIds: ["whatIsGood", "looksAfter", "ownIdea", "anythingElse"],
   },
-  {
-    id: "hearing",
-    title: "Hearing back",
-    description: "Whether you’d like to hear back from us.",
-    questionIds: ["hearingBack"],
-  },
 ];
 
 const isVisible = (id: string, answers: Answers) => {
@@ -369,7 +363,7 @@ function HubPage({
       </h2>
 
       <p className={`mt-4 ${body}`}>
-        There are five short sections. You can answer them in any order, or
+        There are four short sections. You can answer them in any order, or
         stop and finish the survey later. Every question is optional.
       </p>
 
@@ -443,7 +437,6 @@ function QuestionPage({
 }) {
   const selected = answer?.selected ?? [];
   const followUps = answer?.followUps ?? {};
-  const extraField = question.extraField;
 
   const setFollowUp = (label: string, value: string) =>
     onChange({
@@ -539,21 +532,6 @@ function QuestionPage({
                 );
               })}
             </div>
-            {extraField &&
-            selected.some((s) => extraField.showWhen.includes(s)) ? (
-              <div className="mt-4">
-                <label htmlFor={`${question.id}-extra`} className={`block ${body}`}>
-                  {extraField.label}
-                </label>
-                <input
-                  id={`${question.id}-extra`}
-                  type={extraField.type ?? "text"}
-                  value={followUps[extraField.key] ?? ""}
-                  onChange={(e) => setFollowUp(extraField.key, e.target.value)}
-                  className="govuk-input mt-2 w-full"
-                />
-              </div>
-            ) : null}
           </fieldset>
         )}
       </div>
@@ -587,8 +565,6 @@ function answerText(answer?: Answer) {
     const extra = answer.followUps?.[label];
     parts.push(extra ? `${label}: ${extra}` : label);
   });
-  const email = answer?.followUps?.["email"]?.trim();
-  if (email && answer?.selected.length) parts.push(email);
   return parts.length ? parts.join(", ") : "Not answered";
 }
 
