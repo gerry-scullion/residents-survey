@@ -4,9 +4,8 @@ import { readFileSync } from "node:fs";
 import { questions } from "../questions";
 import {
   DETAIL_COLUMNS,
-  buildContact,
   buildResponse,
-  contactFields,
+  cleanEmail,
   responseFields,
 } from "./response";
 
@@ -32,17 +31,8 @@ describe("Netlify forms", () => {
     assert.deepEqual(fieldNames("survey"), sent);
   });
 
-  it("the static contact form lists every field the app sends", () => {
-    const contact = {
-      email: "a@b.c",
-      wants_summary: true,
-      wants_own_copy: true,
-      wants_updates: false,
-    };
-    assert.deepEqual(
-      fieldNames("contact"),
-      Object.keys(contactFields(contact)).sort(),
-    );
+  it("the static contact form only takes an email address", () => {
+    assert.deepEqual(fieldNames("contact"), ["email"]);
   });
 
   it("every option with a detail box has somewhere to go", () => {
@@ -91,35 +81,15 @@ describe("Netlify forms", () => {
     assert.equal(fields["tenure"], "");
   });
 
-  it("never puts the email address in the survey response", () => {
-    const answers = {
-      hearingBack: {
-        selected: ["Keep me updated"],
-        followUps: { email: "test@example.com" },
-      },
-    };
-    assert.ok(
-      !JSON.stringify(responseFields(buildResponse(answers))).includes(
-        "test@example.com",
-      ),
-    );
-    assert.deepEqual(contactFields(buildContact(answers)!), {
-      email: "test@example.com",
-      wants_own_copy: "no",
-      wants_updates: "yes",
-    });
+  it("the survey no longer asks for an email address", () => {
+    assert.ok(!questions.some((q) => q.id === "hearingBack"));
+    assert.ok(!fieldNames("survey").some((n) => n.includes("email")));
   });
 
-  it("sends no contact without an email address", () => {
-    assert.equal(
-      buildContact({ hearingBack: { selected: ["Keep me updated"] } }),
-      null,
-    );
-    assert.equal(
-      buildContact({
-        hearingBack: { selected: ["No thanks"], followUps: { email: "x@y.z" } },
-      }),
-      null,
-    );
+  it("checks email addresses typed on the thank you page", () => {
+    assert.equal(cleanEmail("  name@example.com "), "name@example.com");
+    assert.equal(cleanEmail(""), null);
+    assert.equal(cleanEmail("name"), null);
+    assert.equal(cleanEmail("name@example"), null);
   });
 });

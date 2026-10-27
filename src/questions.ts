@@ -12,8 +12,6 @@ export type Question = {
   options?: Option[];
   /** Only show this question when another answer includes this option. */
   showIf?: { questionId: string; includes: string };
-  /** One shared text field shown when any of the listed options is chosen. */
-  extraField?: { key: string; label: string; type?: string; showWhen: string[] };
 };
 
 const many = "Tick as many as you like.";
@@ -170,22 +168,5 @@ export const questions: Question[] = [
     id: "anythingElse",
     title: "Anything else?",
     type: "text",
-  },
-  {
-    id: "hearingBack",
-    title: "Would you like to hear back?",
-    hint: many,
-    type: "checkbox",
-    options: [
-      { label: "Send me a copy of my answers" },
-      { label: "Keep me updated" },
-      { label: "No thanks" },
-    ],
-    extraField: {
-      key: "email",
-      label: "Your email address",
-      type: "email",
-      showWhen: ["Send me a copy of my answers", "Keep me updated"],
-    },
   },
 ];

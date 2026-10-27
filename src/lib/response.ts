@@ -46,27 +46,6 @@ export function buildResponse(answers: Answers) {
 
 export type SurveyResponse = ReturnType<typeof buildResponse>;
 
-/**
- * The contact request, if any. It is kept apart from the response and never
- * carries anything that could link the two.
- */
-export function buildContact(answers: Answers) {
-  const hearing = answers["hearingBack"];
-  const ownCopy =
-    hearing?.selected.includes("Send me a copy of my answers") ?? false;
-  const updates = hearing?.selected.includes("Keep me updated") ?? false;
-  const email = hearing?.followUps?.["email"]?.trim();
-  if (!(ownCopy || updates) || !email) return null;
-  return {
-    email,
-    wants_summary: true,
-    wants_own_copy: ownCopy,
-    wants_updates: updates,
-  };
-}
-
-export type ContactRequest = NonNullable<ReturnType<typeof buildContact>>;
-
 /** Columns whose option details are sent to Netlify as `<column>_details`. */
 export const DETAIL_COLUMNS = [
   "road",
@@ -93,11 +72,11 @@ export function responseFields(
   return fields;
 }
 
-/** Flattens a contact request into the fields of the Netlify "contact" form. */
-export function contactFields(contact: ContactRequest): Record<string, string> {
-  return {
-    email: contact.email,
-    wants_own_copy: contact.wants_own_copy ? "yes" : "no",
-    wants_updates: contact.wants_updates ? "yes" : "no",
-  };
+/**
+ * Tidies an email address typed on the thank you page. Returns null if it
+ * doesn't look like an email address.
+ */
+export function cleanEmail(input: string): string | null {
+  const email = input.trim();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
 }

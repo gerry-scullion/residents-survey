@@ -8,7 +8,8 @@
   <body>
     <!--
       Netlify reads this file at deploy time to register the forms.
-      The survey itself posts here from JavaScript (see src/lib/submit.ts).
+      The survey and the thank you page post here from JavaScript
+      (see src/lib/submit.ts).
       Field names must match src/lib/response.ts; a test checks this.
       The two forms are separate on purpose: answers and email addresses
       must never be linked.
@@ -43,8 +44,6 @@
       <input type="hidden" name="form-name" value="contact" />
       <input name="bot-field" />
       <input type="email" name="email" />
-      <input name="wants_own_copy" />
-      <input name="wants_updates" />
     </form>
   </body>
 </html>

@@ -33,27 +33,33 @@ function Privacy() {
           What happens to your answers
         </h1>
 
-        <p className={`mt-5 ${body}`}>
-          We do not ask for your name or your house number. Please do not
-          include them in the written answers.
+        <p className={`mt-6 ${body}`}>
+          We&rsquo;ll read every answer by the end of November.
         </p>
 
         <p className={`mt-5 ${body}`}>
-          Only the two of us can see the responses. We will write a summary and
-          share it with the residents&rsquo; committee and with the three roads.
-          The summary will not identify anyone. Because these are small roads,
-          we will leave out any detail that could point to one household.
+          We&rsquo;ll then write a report for the Kincora Residents Committee
+          and work with them to plan for 2027.
         </p>
 
         <p className={`mt-5 ${body}`}>
-          If you give us your email address, it is stored separately from your
-          answers and cannot be matched back to them. We will only use it to
-          send you the summary. You can ask us to delete it at any time.
+          We don&rsquo;t ask for your name or house number. Please leave them
+          out of anything you write, too.
         </p>
 
         <p className={`mt-5 ${body}`}>
-          We will delete everything once the summary has been shared and the
-          committee has made its decision.
+          The report won&rsquo;t name anyone. These are small roads, so
+          we&rsquo;ll leave out anything that could point to one house.
+        </p>
+
+        <h2 className="mt-10 text-[1.5rem] font-bold leading-[1.2] md:text-[1.875rem]">
+          Getting a copy of the report
+        </h2>
+
+        <p className={`mt-4 ${body}`}>
+          At the end of the survey you can leave your email address and
+          we&rsquo;ll send you the report. It&rsquo;s kept apart from your
+          answers and can&rsquo;t be matched to them.
         </p>
 
         <p className={`mt-10 ${body}`}>
