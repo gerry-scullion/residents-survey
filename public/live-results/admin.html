@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Results Admin</title>
+<style>
+  :root { color-scheme: light; --bg: #f4f3f0; --card: #fcfcfb; --ink: #0b0b0b; --muted: #52514e; --rule: #dddcd7; --focus: #2a78d6; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { color-scheme: dark; --bg: #121211; --card: #1a1a19; --ink: #f0efec; --muted: #c3c2b7; --rule: #383835; --focus: #86b6ef; }
+  }
+  :root[data-theme="dark"] { color-scheme: dark; --bg: #121211; --card: #1a1a19; --ink: #f0efec; --muted: #c3c2b7; --rule: #383835; --focus: #86b6ef; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  main { max-width: 36rem; margin: 0 auto; padding: 32px 16px; }
+  h1 { font-size: 1.75rem; margin: 0 0 8px; }
+  p { color: var(--muted); }
+  label { display: block; font-weight: 600; margin-top: 20px; }
+  input { display: block; width: 100%; margin-top: 6px; font: inherit; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--card); color: var(--ink); box-sizing: border-box; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+  button { font: inherit; min-height: 44px; padding: 8px 16px; border-radius: 6px; border: 1px solid var(--ink); background: var(--ink); color: var(--bg); cursor: pointer; }
+  button.secondary { background: var(--card); color: var(--ink); border-color: var(--rule); }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  #status { margin-top: 20px; padding: 12px 14px; border-radius: 6px; background: var(--card); border: 1px solid var(--rule); white-space: pre-line; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Update themes and quotes</h1>
+  <p>Upload the themes-and-quotes file Claude gives you. It replaces the previous one on the live results page straight away.</p>
+
+  <label for="key">Admin key</label>
+  <input id="key" type="password" autocomplete="off">
+
+  <label for="file">Themes-and-quotes file (.json)</label>
+  <input id="file" type="file" accept="application/json,.json">
+
+  <div class="row">
+    <button id="upload" type="button">Upload</button>
+    <button id="check" class="secondary" type="button">Check what’s there now</button>
+  </div>
+  <div id="status" role="status" hidden></div>
+</main>
+<script>
+const URL_ = "/.netlify/functions/live-results-admin";
+const status = msg => { const s = document.getElementById("status"); s.hidden = false; s.textContent = msg; };
+const key = () => document.getElementById("key").value.trim();
+const explain = res => res.status === 403 ? "That admin key isn’t right." : `Something went wrong (${res.status}).`;
+
+document.getElementById("check").addEventListener("click", async () => {
+  if (!key()) return status("Enter the admin key first.");
+  const res = await fetch(URL_, { headers: { "x-admin-key": key() } });
+  if (!res.ok) return status(explain(res));
+  const d = await res.json();
+  status(d.responses ? `Current file: ${d.responses} responses grouped, ${d.quotes} quotes.\nMade: ${d.updated || "unknown"}` : "Nothing uploaded yet.");
+});
+
+document.getElementById("upload").addEventListener("click", async () => {
+  const file = document.getElementById("file").files[0];
+  if (!key()) return status("Enter the admin key first.");
+  if (!file) return status("Choose the file first.");
+  status("Uploading…");
+  const res = await fetch(URL_, { method: "POST", headers: { "x-admin-key": key(), "content-type": "application/json" }, body: await file.text() });
+  if (!res.ok) {
+    const d = await res.json().catch(() => ({}));
+    return status(d.error === "wrong-shape" || d.error === "not-json" ? "That file isn’t a themes-and-quotes file." : explain(res));
+  }
+  const d = await res.json();
+  status(`Done. ${d.responses} responses grouped, ${d.quotes} quotes. The live page uses them now.`);
+});
+</script>
+</body>
+</html>

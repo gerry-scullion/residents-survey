@@ -45,6 +45,17 @@ Netlify can only find forms in static HTML, and this app is rendered by JavaScri
 
 After the first deploy, turn on form detection in the Netlify dashboard (Forms > Enable form detection) and redeploy. Set up email notifications there if you want them.
 
+## Live results page
+
+`/live-results/#key=…` is a shareable, live summary of the survey. It only opens with the key in the link.
+
+- The page (`public/live-results/index.html`) asks a Netlify function (`netlify/functions/live-results.mts`) for totals. The function reads submissions from Netlify Forms and sends back counts only: never one person's answers, IP addresses or full comments. Groups smaller than 5 are hidden.
+- Theme groupings and approved quotes are made by hand from the exports. They're uploaded at `/live-results/admin.html` and kept in Netlify Blobs, **not in this public repo**.
+- Netlify environment variables it needs:
+  - `RESULTS_KEY`: the key in the shared link
+  - `RESULTS_ADMIN_KEY`: a different key, for the admin page
+  - `NETLIFY_API_TOKEN`: a Netlify personal access token, used to read form submissions
+
 This project was built with [Lovable](https://lovable.dev).
 
 ## Build with Lovable

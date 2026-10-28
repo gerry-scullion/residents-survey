@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Kincora Survey Results</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-0: #f4f3f0; --surface-1: #fcfcfb;
+    --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #6b6a66;
+    --rule: #dddcd7; --soft: #eeede9;
+    --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a; --series-4: #6b6a66;
+    --ref: #0b0b0b; --focus: #2a78d6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --surface-0: #121211; --surface-1: #1a1a19;
+      --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #a3a29a;
+      --rule: #383835; --soft: #262624;
+      --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #a3a29a;
+      --ref: #f0efec; --focus: #86b6ef;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-0: #121211; --surface-1: #1a1a19;
+    --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #a3a29a;
+    --rule: #383835; --soft: #262624;
+    --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #a3a29a;
+    --ref: #f0efec; --focus: #86b6ef;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--surface-0); color: var(--text-primary);
+    font: 17px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 28px 16px 64px; }
+  h1 { font-size: 2rem; line-height: 1.15; margin: 0 0 6px; letter-spacing: -0.01em; }
+  h2 { font-size: 1.375rem; margin: 44px 0 4px; }
+  h3 { font-size: 1.0625rem; margin: 0 0 2px; }
+  p { margin: 0 0 10px; max-width: 44rem; }
+  .sub { color: var(--text-secondary); }
+  .muted { color: var(--text-muted); font-size: 0.9375rem; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  .filters { z-index: 5; background: var(--surface-0); padding: 12px 0 10px; margin-top: 16px; border-bottom: 1px solid var(--rule); }
+  @media (min-width: 700px) { .filters { position: sticky; top: 0; } }
+  .filter-row { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end; }
+  .filter-row label { display: flex; flex-direction: column; gap: 4px; font-size: 0.8125rem; color: var(--text-secondary); }
+  select { font: inherit; font-size: 0.9375rem; color: var(--text-primary); background: var(--surface-1); border: 1px solid var(--rule); border-radius: 6px; padding: 7px 30px 7px 10px; min-height: 40px; min-width: 9.5rem; }
+  .btn { font: inherit; font-size: 0.9375rem; min-height: 40px; padding: 7px 14px; border-radius: 6px; border: 1px solid var(--rule); background: var(--surface-1); color: var(--text-primary); cursor: pointer; }
+  .btn.primary { background: var(--text-primary); color: var(--surface-1); border-color: var(--text-primary); }
+  .btn:disabled { opacity: 0.45; cursor: default; }
+  .showing { margin-top: 8px; font-size: 0.9375rem; color: var(--text-secondary); }
+  .showing strong { color: var(--text-primary); }
+  .tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 20px; }
+  .tile { background: var(--surface-1); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; }
+  .tile .num { font-size: 2rem; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .tile .lbl { color: var(--text-secondary); font-size: 0.9375rem; margin-top: 4px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 430px), 1fr)); gap: 16px; margin-top: 14px; }
+  .card { background: var(--surface-1); border: 1px solid var(--rule); border-radius: 8px; padding: 16px 18px 12px; min-width: 0; }
+  .card.wide { grid-column: 1 / -1; }
+  .card .q { color: var(--text-muted); font-size: 0.875rem; margin-bottom: 10px; }
+  .bars { list-style: none; margin: 0; padding: 0; }
+  .bar-row { display: grid; grid-template-columns: minmax(0, 11rem) minmax(0, 1fr); gap: 2px 12px; align-items: center; padding: 4px 0; }
+  .bar-row .name { font-size: 0.9375rem; line-height: 1.3; }
+  .lane { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .track { flex: 1; position: relative; height: 16px; min-width: 0; }
+  .fill { position: absolute; left: 0; top: 1px; bottom: 1px; display: flex; gap: 2px; transition: width 0.25s ease; }
+  .seg { height: 100%; flex-shrink: 0; }
+  .fill .seg:last-child { border-radius: 0 4px 4px 0; }
+  .ref { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--ref); border-radius: 1px; }
+  .val { font-size: 0.875rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; min-width: 2.25rem; text-align: right; }
+  button.bar-row { font: inherit; color: inherit; background: none; border: 0; border-radius: 6px; text-align: left; cursor: pointer; padding: 5px 6px; margin: 0 -6px; width: calc(100% + 12px); }
+  button.bar-row:hover { background: var(--soft); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0 0 10px; padding: 0; list-style: none; font-size: 0.875rem; color: var(--text-secondary); }
+  .legend li { display: flex; align-items: center; gap: 6px; }
+  .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .sw-ref { width: 2px; height: 14px; background: var(--ref); display: inline-block; }
+  details { margin-top: 8px; font-size: 0.875rem; }
+  summary { cursor: pointer; color: var(--text-secondary); }
+  table { border-collapse: collapse; margin-top: 8px; width: 100%; }
+  th, td { text-align: left; padding: 4px 8px 4px 0; border-bottom: 1px solid var(--rule); font-variant-numeric: tabular-nums; }
+  th { font-weight: 600; color: var(--text-secondary); }
+
+  .voices { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr)); gap: 12px; margin-top: 14px; }
+  .voice { margin: 0; background: var(--surface-1); border: 1px solid var(--rule); border-left: 4px solid var(--series-1); border-radius: 0 8px 8px 0; padding: 14px 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; }
+  .voice p { margin: 0; font-size: 1.0625rem; line-height: 1.45; }
+  .voice footer, .q-who { color: var(--text-muted); font-size: 0.8125rem; }
+  .tag { display: inline-block; background: var(--soft); color: var(--text-secondary); border-radius: 999px; padding: 1px 8px; margin-right: 6px; font-size: 0.75rem; }
+  .theme-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 430px), 1fr)); gap: 16px; margin-top: 14px; }
+  .theme { background: var(--surface-1); border: 1px solid var(--rule); border-radius: 8px; padding: 16px 18px; scroll-margin-top: 140px; }
+  .theme-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .theme-head .count { color: var(--text-secondary); font-size: 0.875rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .theme ul { list-style: none; margin: 12px 0 0; padding: 0; }
+  .theme li { border-left: 3px solid var(--rule); padding: 2px 0 2px 12px; margin: 0 0 12px; }
+  .theme li p { margin: 0; }
+  .theme li.extra { display: none; }
+  .theme.open li.extra { display: block; }
+  .link-btn { font: inherit; font-size: 0.9375rem; background: none; border: 0; padding: 4px 0; color: var(--series-1); text-decoration: underline; cursor: pointer; }
+
+  .notice { background: var(--surface-1); border: 1px dashed var(--rule); border-radius: 8px; padding: 24px; margin-top: 20px; color: var(--text-secondary); }
+  .about { background: var(--surface-1); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px; margin-top: 14px; }
+  .about ul { margin: 4px 0 0; padding-left: 20px; }
+  .about li { margin-bottom: 6px; }
+  #tip { position: fixed; pointer-events: none; z-index: 20; display: none; background: var(--text-primary); color: var(--surface-1);
+    padding: 6px 10px; border-radius: 6px; font-size: 0.8125rem; line-height: 1.4; max-width: 280px; }
+  @media (max-width: 560px) {
+    .bar-row { grid-template-columns: minmax(0, 1fr); }
+    h1 { font-size: 1.625rem; }
+    select { min-width: 0; width: 100%; }
+    .filter-row label { flex: 1 1 45%; }
+  }
+  @media (prefers-reduced-motion: reduce) { .fill { transition: none; } }
+  @media (forced-colors: active) { .seg { forced-color-adjust: none; border: 1px solid CanvasText; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>What’s it like living here? Results so far</h1>
+  <p class="sub">Answers from people on Kincora Avenue, Kincora Grove and Kincora Drive. This page updates as new answers come in.</p>
+  <div class="tools">
+    <span class="muted" id="updated"></span>
+    <button class="btn" id="refresh" type="button">Refresh</button>
+  </div>
+
+  <div class="notice" id="notice" hidden></div>
+
+  <div id="app" hidden>
+    <div class="filters" role="region" aria-label="Filters">
+      <div class="filter-row">
+        <label>Road
+          <select id="f-road"><option value="">All roads</option><option>Avenue</option><option>Grove</option><option>Drive</option></select>
+        </label>
+        <label>Age
+          <select id="f-age"><option value="">All ages</option><option>Under 30</option><option>30 to 44</option><option>45 to 59</option><option>60 to 74</option><option>75 or over</option></select>
+        </label>
+        <label>Household
+          <select id="f-house"><option value="">Everyone</option><option value="kids">Children under 13</option><option value="teens">Teenagers</option><option value="adults">Adults only</option></select>
+        </label>
+        <label>Dog
+          <select id="f-dog"><option value="">Dog or no dog</option><option value="Yes">Has a dog</option><option value="No">No dog</option></select>
+        </label>
+        <button class="btn" id="reset" type="button">Clear filters</button>
+      </div>
+      <div class="showing" id="showing" aria-live="polite"></div>
+    </div>
+
+    <div class="notice" id="small" hidden></div>
+
+    <div id="content">
+      <div class="tiles" id="tiles"></div>
+
+      <h2>In their own words</h2>
+      <p class="sub" id="voices-intro"></p>
+      <div class="voices" id="voices"></div>
+      <div class="tools"><button class="btn primary" id="see-all" type="button">See every quote, by theme</button></div>
+
+      <h2>Who answered</h2>
+      <div class="grid" id="who"></div>
+
+      <h2>How people use the area</h2>
+      <div class="grid" id="use"></div>
+
+      <h2>What needs fixing</h2>
+      <div class="grid" id="fix"></div>
+
+      <h2>What people would change</h2>
+      <p class="sub" id="themes-intro"></p>
+      <div class="grid" id="themes" style="grid-template-columns:1fr"></div>
+
+      <h2>In their own words: what people would change</h2>
+      <p class="sub">Short extracts, chosen so they don’t point to anyone. Light typo fixes only; “…” marks words left out.</p>
+      <div class="theme-grid" id="change-quotes"></div>
+
+      <h2>In their own words: what people like</h2>
+      <div class="theme-grid" id="like-quotes"></div>
+    </div>
+
+    <h2>About these results</h2>
+    <div class="about">
+      <ul>
+        <li>We don’t ask for names. This page shows totals only, never one person’s answers.</li>
+        <li>Groups smaller than 5 people are hidden, because on roads this size they could point to a household.</li>
+        <li>Written answers are grouped into themes by hand, so the themes and quotes catch up a little after new answers arrive.</li>
+        <li>We’ll write a full report for the Kincora Residents Committee once the survey closes.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+<div id="tip" role="tooltip"></div>
+
+<script>
+const ENDPOINT = "/.netlify/functions/live-results";
+const KEY = new URLSearchParams(location.hash.slice(1)).get("key") || "";
+
+const ROADS = [
+  { key: "Avenue", label: "Kincora Avenue", color: "var(--series-1)" },
+  { key: "Grove", label: "Kincora Grove", color: "var(--series-2)" },
+  { key: "Drive", label: "Kincora Drive", color: "var(--series-3)" },
+  { key: "Other", label: "Nearby road", color: "var(--series-4)" },
+];
+const CHANGE = {
+  V: "Parking: vans, both sides, blocked roads", S: "More seating", F: "Fix pavements and kerbs",
+  R: "Road safety: speed, junctions, kids near roads", L: "Leaves, verges, dumping and tidy-ups",
+  G: "Improve the greens (play, levelling, upkeep)", C: "Community: events, looking out for each other",
+  P: "More planting, trees and wildlife", B: "More bins, and emptying them",
+  A: "Access for buggies, wheelchairs, older people", I: "Communication: who’s involved, the money, one group chat",
+  D: "Dog mess", SH: "Tidy the shop area on Kincora Avenue", LB: "Use the land behind the green",
+};
+const LIKE = {
+  AM: "Close to the sea, parks, shops and town", NB: "Neighbours and community", QS: "Quiet and safe",
+  TR: "Good transport", GR: "Trees, greenery and the greens",
+};
+const QUESTIONS = {
+  who: [
+    { key: "road", title: "Road", q: "Which road do you live on?", order: ["Avenue", "Grove", "Drive", "Other"], label: k => k === "Other" ? "Nearby road" : "Kincora " + k, keep: true },
+    { key: "age", title: "Age", q: "How old are you?", order: ["Under 30", "30 to 44", "45 to 59", "60 to 74", "75 or over"], keep: true },
+    { key: "tenure", title: "How long they’ve lived here", q: "How long have you lived here?", order: ["Less than 2 years", "2 to 10 years", "10 to 25 years", "More than 25 years"], keep: true },
+    { key: "household", title: "Who lives in the house", q: "Tick as many as you like", order: ["Just adults", "Children under 5", "Children 5 to 12", "Teenagers", "Someone over 75", "Someone who finds it hard to get out"] },
+  ],
+  use: [
+    { key: "places", title: "Places they use", q: "Which of these local amenities do you use?", order: ["St Anne's Park", "The seafront", "The green", "Somewhere else nearby", "None of these"] },
+    { key: "uses", title: "What for", q: "What do you use them for?", order: ["Walking", "Meeting people", "Walking the dog", "The kids play there", "Football", "Sitting out", "Something else"] },
+    { key: "things", title: "Local things they’ve used", q: "Have you used any of these?", order: ["The book box", "The goals on the green", "The swing on the tree", "No", "Didn't know they were there"] },
+    { key: "looks", title: "Who looks after shared spaces", q: "Does anyone help look after the shared spaces?", order: ["I do, a bit", "Not sure", "Yes, someone else does", "Not that I know of"] },
+  ],
+};
+const FIX_ORDER = ["Pavements", "Nowhere to sit", "Kerbs", "Dog mess", "Something else", "Overgrown areas", "Bins and litter", "Parking", "Street lights", "No"];
+
+const $ = id => document.getElementById(id);
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const pct = (n, d) => d ? Math.round(n / d * 100) : 0;
+const pretty = s => s.replace("St Anne's", "St Anne’s").replace("Didn't", "Didn’t");
+const roadLabel = r => (ROADS.find(x => x.key === r) || { label: "Nearby road" }).label;
+
+const tip = $("tip");
+function moveTip(e) {
+  const pad = 14, w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = e.clientX + pad, y = e.clientY + pad;
+  if (x + w > innerWidth - 8) x = e.clientX - w - pad;
+  if (y + h > innerHeight - 8) y = e.clientY - h - pad;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+function attachTip(node, html) {
+  node.addEventListener("pointerenter", e => { tip.innerHTML = html; tip.style.display = "block"; moveTip(e); });
+  node.addEventListener("pointermove", moveTip);
+  node.addEventListener("pointerleave", () => { tip.style.display = "none"; });
+}
+
+const state = { road: "", age: "", house: "", dog: "" };
+let D = null, EXPANDED = false;
+const isFiltered = () => !!(state.road || state.age || state.house || state.dog);
+
+function barRow({ name, n, of, refShare, segs, button, onClick, tipExtra }) {
+  const row = el(button ? "button" : "li", "bar-row");
+  if (button) { row.type = "button"; row.addEventListener("click", onClick); }
+  row.setAttribute("aria-label", `${name}: ${n} of ${of} (${pct(n, of)}%)` + (refShare != null ? `, everyone ${Math.round(refShare * 100)}%` : ""));
+  row.appendChild(el("span", "name", esc(name)));
+  const lane = el("span", "lane"), track = el("span", "track"), fill = el("span", "fill");
+  fill.style.width = (of ? n / of * 100 : 0) + "%";
+  for (const s of (segs || [{ v: n, color: "var(--series-1)" }])) {
+    if (!s.v) continue;
+    const seg = el("span", "seg");
+    seg.style.width = `calc(${s.v / n * 100}% - ${2 * (1 - s.v / n)}px)`;
+    seg.style.background = s.color;
+    fill.appendChild(seg);
+  }
+  track.appendChild(fill);
+  if (refShare != null) { const ref = el("span", "ref"); ref.style.left = `calc(${refShare * 100}% - 1px)`; track.appendChild(ref); }
+  lane.appendChild(track);
+  lane.appendChild(el("span", "val", String(n)));
+  row.appendChild(lane);
+  attachTip(row, `<strong>${esc(name)}</strong><br>${n} of ${of} people (${pct(n, of)}%)` +
+    (refShare != null ? `<br>Everyone: ${Math.round(refShare * 100)}%` : "") + (tipExtra ? "<br>" + tipExtra : ""));
+  return row;
+}
+
+function tableView(headers, rows) {
+  const d = el("details");
+  d.appendChild(el("summary", null, "Show as a table"));
+  const t = el("table");
+  t.innerHTML = "<thead><tr>" + headers.map(h => `<th scope="col">${esc(h)}</th>`).join("") + "</tr></thead><tbody>" +
+    rows.map(r => "<tr>" + r.map((c, i) => i ? `<td>${esc(c)}</td>` : `<th scope="row">${esc(c)}</th>`).join("") + "</tr>").join("") + "</tbody>";
+  d.appendChild(t);
+  return d;
+}
+function refLegend() {
+  const ul = el("ul", "legend");
+  ul.appendChild(el("li", null, `<span class="sw" style="background:var(--series-1)"></span>This group`));
+  ul.appendChild(el("li", null, `<span class="sw-ref"></span>Everyone, for comparison`));
+  return ul;
+}
+
+function questionCard(def) {
+  const g = D.group, all = D.everyone;
+  const c = g.counts[def.key] || {}, everyone = all.counts[def.key] || {};
+  const card = el("section", "card");
+  card.appendChild(el("h3", null, esc(def.title)));
+  card.appendChild(el("div", "q", esc(def.q)));
+  if (isFiltered()) card.appendChild(refLegend());
+  let names = def.order.filter(k => def.key !== "road" || k !== "Other" || everyone[k]);
+  if (!def.keep) names.sort((a, b) => (c[b] || 0) - (c[a] || 0) || def.order.indexOf(a) - def.order.indexOf(b));
+  const label = def.label || pretty;
+  const ul = el("ul", "bars");
+  for (const k of names) ul.appendChild(barRow({ name: label(k), n: c[k] || 0, of: g.n, refShare: isFiltered() ? (everyone[k] || 0) / all.n : null }));
+  card.appendChild(ul);
+  card.appendChild(tableView(["Answer", "People", "Share"], names.map(k => [label(k), c[k] || 0, pct(c[k] || 0, g.n) + "%"])));
+  return card;
+}
+
+function fixCard() {
+  const g = D.group, all = D.everyone.counts.fix || {};
+  const roads = ROADS.filter(r => (g.counts.road || {})[r.key]);
+  const card = el("section", "card wide");
+  card.appendChild(el("h3", null, "What needs fixing, by road"));
+  card.appendChild(el("div", "q", "Does anything in the area need to be fixed? Tick as many as you like"));
+  const legend = el("ul", "legend");
+  for (const r of roads) legend.appendChild(el("li", null, `<span class="sw" style="background:${r.color}"></span>${r.label}`));
+  if (isFiltered()) legend.appendChild(el("li", null, `<span class="sw-ref"></span>Everyone`));
+  card.appendChild(legend);
+  const names = FIX_ORDER.slice().sort((a, b) => ((g.counts.fix || {})[b] || 0) - ((g.counts.fix || {})[a] || 0));
+  const ul = el("ul", "bars"), rowsT = [];
+  for (const name of names) {
+    const by = roads.map(r => ((D.fixByRoad[name] || {})[r.key]) || 0);
+    const total = by.reduce((a, b) => a + b, 0);
+    const label = name === "No" ? "No, nothing" : name;
+    ul.appendChild(barRow({ name: label, n: total, of: g.n, refShare: isFiltered() ? (all[name] || 0) / D.everyone.n : null,
+      segs: roads.map((r, i) => ({ v: by[i], color: r.color })), tipExtra: roads.map((r, i) => `${r.label}: ${by[i]}`).join("<br>") }));
+    rowsT.push([label, ...by, total]);
+  }
+  card.appendChild(ul);
+  card.appendChild(tableView(["Answer", ...roads.map(r => r.label), "Total"], rowsT));
+  return card;
+}
+
+function themeCard() {
+  const t = D.group.themes, all = D.everyone.themes;
+  const card = el("section", "card");
+  card.appendChild(el("h3", null, "Themes in the written answers"));
+  card.appendChild(el("div", "q", `Counted once per person. Click a theme to read the quotes.`));
+  if (isFiltered()) card.appendChild(refLegend());
+  const keys = Object.keys(CHANGE).filter(k => all.change[k]).sort((a, b) => (t.change[b] || 0) - (t.change[a] || 0) || (all.change[b] || 0) - (all.change[a] || 0));
+  const box = el("div", "bars");
+  for (const k of keys) box.appendChild(barRow({ name: CHANGE[k], n: t.change[k] || 0, of: t.coded,
+    refShare: isFiltered() && all.coded ? (all.change[k] || 0) / all.coded : null, button: true,
+    onClick: () => { const s = $("q-change-" + k); if (s) { s.classList.add("open"); s.scrollIntoView({ behavior: "smooth", block: "start" }); } },
+    tipExtra: "Click to read the quotes" }));
+  card.appendChild(box);
+  card.appendChild(tableView(["Theme", "People"], keys.map(k => [CHANGE[k], t.change[k] || 0])));
+  return card;
+}
+
+const score = q => -Math.abs(q.length - 150);
+function renderVoices() {
+  const quotes = D.quotes;
+  let picks = quotes.filter(q => q.featured);
+  const rest = quotes.filter(q => !q.featured && q.text.length > 60 && CHANGE[q.code]).sort((a, b) => score(b.text) - score(a.text));
+  const seen = new Set(picks.map(p => p.code));
+  for (const p of rest) { if (picks.length >= 12) break; if (!seen.has(p.code)) { picks.push(p); seen.add(p.code); } }
+  for (const p of rest) { if (picks.length >= 12) break; if (!picks.includes(p)) picks.push(p); }
+  picks = picks.slice(0, 12);
+  $("voices-intro").textContent = quotes.length ? `${picks.length} of ${quotes.length} quotes. The rest are grouped by theme further down.` : "No quotes yet for this group.";
+  $("see-all").textContent = `See all ${quotes.length} quotes, by theme`;
+  $("see-all").hidden = !quotes.length;
+  const box = $("voices"); box.innerHTML = "";
+  for (const p of picks) {
+    const fig = el("figure", "voice");
+    fig.appendChild(el("p", null, "“" + esc(p.text) + "”"));
+    const label = (CHANGE[p.code] || LIKE[p.code] || "").split(/[:(]/)[0].trim();
+    fig.appendChild(el("footer", null, `<span class="tag">${esc(label)}</span>${esc(roadLabel(p.road))}`));
+    box.appendChild(fig);
+  }
+}
+
+function renderQuoteThemes(codes, field, boxId) {
+  const box = $(boxId); box.innerHTML = "";
+  const counts = D.group.themes[field];
+  const keys = Object.keys(codes).filter(k => counts[k] || D.quotes.some(q => q.code === k)).sort((a, b) => (counts[b] || 0) - (counts[a] || 0));
+  for (const k of keys) {
+    const quotes = D.quotes.filter(q => q.code === k).sort((a, b) => score(b.text) - score(a.text));
+    const sec = el("section", "theme" + (EXPANDED ? " open" : ""));
+    sec.id = "q-" + field + "-" + k;
+    const head = el("div", "theme-head");
+    head.appendChild(el("h3", null, esc(codes[k])));
+    head.appendChild(el("span", "count", `${counts[k] || 0} of ${D.group.themes.coded} people`));
+    sec.appendChild(head);
+    const ul = el("ul");
+    if (!quotes.length) ul.appendChild(el("li", null, `<p class="muted">No quotes to share for this group yet.</p>`));
+    quotes.forEach((q, i) => {
+      const li = el("li", i >= 3 ? "extra" : null);
+      li.appendChild(el("p", null, "“" + esc(q.text) + "”"));
+      li.appendChild(el("span", "q-who", esc(roadLabel(q.road))));
+      ul.appendChild(li);
+    });
+    sec.appendChild(ul);
+    if (quotes.length > 3) {
+      const more = el("button", "link-btn", EXPANDED ? "Show fewer" : `Show all ${quotes.length} quotes`);
+      more.type = "button";
+      more.addEventListener("click", () => {
+        const open = sec.classList.toggle("open");
+        more.textContent = open ? "Show fewer" : `Show all ${quotes.length} quotes`;
+      });
+      sec.appendChild(more);
+    }
+    box.appendChild(sec);
+  }
+}
+
+function render() {
+  const parts = [state.road && "Kincora " + state.road, state.age && "aged " + state.age,
+    state.house && { kids: "with children under 13", teens: "with teenagers", adults: "adults only" }[state.house],
+    state.dog && (state.dog === "Yes" ? "dog owners" : "no dog")].filter(Boolean);
+  $("showing").innerHTML = `Showing <strong>${D.n} of ${D.total}</strong> responses` + (parts.length ? ": " + esc(parts.join(", ")) : "");
+  $("reset").disabled = !isFiltered();
+  const latest = D.latest ? new Date(D.latest + "Z").toLocaleString("en-IE", { dateStyle: "medium", timeStyle: "short" }) : "";
+  $("updated").textContent = latest ? `Latest answer: ${latest}` : "";
+
+  $("content").hidden = D.small;
+  $("small").hidden = !D.small;
+  if (D.small) {
+    $("small").textContent = D.n === 0 ? "No responses match these filters." :
+      `Fewer than 5 responses match these filters, so results are hidden. On roads this size, a small group could point to a household. Try fewer filters.`;
+    return;
+  }
+  const g = D.group, fix = g.counts.fix || {};
+  const top = Object.entries(g.themes.change).sort((a, b) => b[1] - a[1])[0];
+  const tiles = [
+    { num: g.n, lbl: isFiltered() ? `responses in this group (of ${D.total})` : "responses so far" },
+    { num: pct(fix["Pavements"] || 0, g.n) + "%", lbl: "say pavements need fixing" },
+    { num: pct(fix["Nowhere to sit"] || 0, g.n) + "%", lbl: "say there’s nowhere to sit" },
+    top ? { num: top[1], lbl: "top written ask: " + CHANGE[top[0]].split(":")[0].toLowerCase() } : null,
+  ].filter(Boolean);
+  const t = $("tiles"); t.innerHTML = "";
+  for (const x of tiles) { const d = el("div", "tile"); d.appendChild(el("div", "num", esc(x.num))); d.appendChild(el("div", "lbl", esc(x.lbl))); t.appendChild(d); }
+
+  renderVoices();
+  for (const id of ["who", "use"]) { const box = $(id); box.innerHTML = ""; for (const def of QUESTIONS[id]) box.appendChild(questionCard(def)); }
+  const f = $("fix"); f.innerHTML = ""; f.appendChild(fixCard());
+  const waiting = g.n - g.themes.coded;
+  $("themes-intro").textContent = `Grouped by hand for ${g.themes.coded} of ${g.n} responses in this group.` +
+    (waiting > 0 ? ` ${waiting} newer ${waiting === 1 ? "one is" : "ones are"} still to be read and grouped.` : "");
+  const th = $("themes"); th.innerHTML = ""; th.appendChild(themeCard());
+  renderQuoteThemes(CHANGE, "change", "change-quotes");
+  renderQuoteThemes(LIKE, "like", "like-quotes");
+}
+
+function notice(msg) { $("notice").hidden = false; $("notice").textContent = msg; $("app").hidden = true; }
+
+async function load() {
+  if (!KEY) return notice("This link is missing its key. Please use the full link you were sent.");
+  $("refresh").disabled = true;
+  const params = new URLSearchParams(Object.entries(state).filter(([, v]) => v));
+  try {
+    const res = await fetch(ENDPOINT + "?" + params, { headers: { "x-results-key": KEY }, cache: "no-store" });
+    if (res.status === 403) return notice("This link isn’t valid. Please check you have the full link.");
+    if (res.status === 503) return notice("The results page isn’t switched on yet.");
+    if (!res.ok) throw new Error(String(res.status));
+    D = await res.json();
+    $("notice").hidden = true; $("app").hidden = false;
+    render();
+  } catch {
+    notice("The results couldn’t load just now. Please try again in a minute.");
+  } finally {
+    $("refresh").disabled = false;
+  }
+}
+
+for (const [id, key] of [["f-road", "road"], ["f-age", "age"], ["f-house", "house"], ["f-dog", "dog"]])
+  $(id).addEventListener("change", e => { state[key] = e.target.value; load(); });
+$("reset").addEventListener("click", () => {
+  for (const id of ["f-road", "f-age", "f-house", "f-dog"]) $(id).value = "";
+  Object.assign(state, { road: "", age: "", house: "", dog: "" });
+  load();
+});
+$("refresh").addEventListener("click", load);
+$("see-all").addEventListener("click", () => { EXPANDED = true; render(); $("change-quotes").scrollIntoView({ behavior: "smooth", block: "start" }); });
+load();
+</script>
+</body>
+</html>
