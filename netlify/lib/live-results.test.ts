@@ -7,7 +7,8 @@ import {
   type Coding,
   type Submission,
 } from "./live-results";
-import { keyMatches } from "./keys";
+import { keyMatchesHash } from "./keys";
+import { pickAnswers } from "./live-results";
 
 // Made-up responses only. Real responses never go in this repo.
 function sub(
@@ -112,10 +113,24 @@ describe("live results", () => {
     );
   });
 
-  it("checks keys", () => {
-    assert.equal(keyMatches("abc", "abc"), true);
-    assert.equal(keyMatches("abd", "abc"), false);
-    assert.equal(keyMatches(null, "abc"), false);
-    assert.equal(keyMatches("abc", undefined), false);
+  it("checks keys against their fingerprints", () => {
+    const abcHash =
+      "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
+    assert.equal(keyMatchesHash("abc", abcHash), true);
+    assert.equal(keyMatchesHash("abd", abcHash), false);
+    assert.equal(keyMatchesHash(null, abcHash), false);
+  });
+
+  it("keeps only tick-box answers when saving a response", () => {
+    const kept = pickAnswers(sub(1, "Drive"));
+    assert.deepEqual(Object.keys(kept.data).sort(), [
+      "age_band",
+      "has_dog",
+      "household",
+      "needs_fixing",
+      "road",
+    ]);
+    assert.ok(!JSON.stringify(kept).includes("Secret full comment"));
+    assert.ok(!JSON.stringify(kept).includes("203.0.113.9"));
   });
 });

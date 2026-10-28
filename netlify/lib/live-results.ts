@@ -15,7 +15,35 @@ export type Coding = {
   updated?: string;
   responses: Record<string, { change?: string[]; like?: string[] }>;
   quotes: { at: string; code: string; text: string; featured?: boolean }[];
+  /** Tick-box answers for responses sent before the live page was switched on. */
+  submissions?: Submission[];
 };
+
+/**
+ * The only answers the live page keeps: tick boxes, no written comments.
+ * Everything else in a submission (comments, IP address, browser) is dropped.
+ */
+export const ANSWER_FIELDS = [
+  "road",
+  "tenure",
+  "household",
+  "has_dog",
+  "age_band",
+  "outdoor_places",
+  "place_uses",
+  "local_things",
+  "needs_fixing",
+  "looks_after",
+] as const;
+
+export function pickAnswers(s: Submission): Submission {
+  const data: Record<string, string> = {};
+  for (const f of ANSWER_FIELDS) {
+    const v = s.data[f];
+    if (typeof v === "string") data[f] = v;
+  }
+  return { created_at: s.created_at, data };
+}
 
 export type Filters = {
   road?: string;

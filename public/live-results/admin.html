@@ -28,7 +28,7 @@
 <body>
 <main>
   <h1>Update themes and quotes</h1>
-  <p>Upload the themes-and-quotes file Claude gives you. It replaces the previous one on the live results page straight away.</p>
+  <p>Upload the themes-and-quotes file Claude gives you. It updates the live results page straight away. New survey answers appear on their own; this file adds the themes and quotes.</p>
 
   <label for="key">Admin key</label>
   <input id="key" type="password" autocomplete="off">
@@ -53,7 +53,7 @@ document.getElementById("check").addEventListener("click", async () => {
   const res = await fetch(URL_, { headers: { "x-admin-key": key() } });
   if (!res.ok) return status(explain(res));
   const d = await res.json();
-  status(d.responses ? `Current file: ${d.responses} responses grouped, ${d.quotes} quotes.\nMade: ${d.updated || "unknown"}` : "Nothing uploaded yet.");
+  status(`${d.responses} responses on the live page.\n${d.grouped ? `Themes for ${d.grouped} of them, ${d.quotes} quotes (made ${d.updated || "unknown"}).` : "No themes or quotes uploaded yet."}`);
 });
 
 document.getElementById("upload").addEventListener("click", async () => {
@@ -67,7 +67,7 @@ document.getElementById("upload").addEventListener("click", async () => {
     return status(d.error === "wrong-shape" || d.error === "not-json" ? "That file isn’t a themes-and-quotes file." : explain(res));
   }
   const d = await res.json();
-  status(`Done. ${d.responses} responses grouped, ${d.quotes} quotes. The live page uses them now.`);
+  status(`Done. ${d.responses} responses on the live page, themes for ${d.grouped}, ${d.quotes} quotes.`);
 });
 </script>
 </body>

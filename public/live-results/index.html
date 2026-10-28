@@ -422,6 +422,7 @@ function render() {
   const latest = D.latest ? new Date(D.latest + "Z").toLocaleString("en-IE", { dateStyle: "medium", timeStyle: "short" }) : "";
   $("updated").textContent = latest ? `Latest answer: ${latest}` : "";
 
+  if (D.total === 0) return notice("No results yet. They’ll appear here as people answer the survey.");
   $("content").hidden = D.small;
   $("small").hidden = !D.small;
   if (D.small) {
